@@ -1,10 +1,13 @@
-node_modules
-dist
-dist-ssr
+# Python (api/)
+__pycache__/
+*.pyc
+*.db
+.venv/
+# Node (web/)
+node_modules/
+dist/
+# Ambiente e SO
 .env
 .env.local
-*.local
 .DS_Store
-.vscode/*
-!.vscode/extensions.json
-dev-dist
+tsconfig.tsbuildinfo
