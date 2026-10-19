@@ -154,3 +154,44 @@ export function analiseDescritiva(dias: number): Promise<AnaliseDescritiva> {
   const q = `inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`;
   return req<AnaliseDescritiva>(`/analises/descritiva?${q}`);
 }
+
+/* -------- Galeria de mídia (fotos/vídeos + descrição) -------- */
+export interface Midia {
+  id: number;
+  tipo: string; // foto | video
+  mime: string;
+  descricao: string | null;
+  criado_em: string;
+}
+
+export const listarMidias = () => req<Midia[]>("/midias");
+
+export async function uploadMidia(
+  file: File, tipo: string, descricao: string,
+): Promise<Midia> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("tipo", tipo);
+  if (descricao) fd.append("descricao", descricao);
+  const tok = getToken();
+  const r = await fetch(`${BASE}/midias/upload`, {
+    method: "POST",
+    headers: tok ? { Authorization: `Bearer ${tok}` } : {},
+    body: fd,
+  });
+  if (!r.ok) throw new ApiError(r.status, await r.text());
+  return r.json();
+}
+
+/** Busca o arquivo autenticado e devolve um object URL para exibir. */
+export async function arquivoBlobUrl(id: number): Promise<string> {
+  const tok = getToken();
+  const r = await fetch(`${BASE}/midias/${id}/arquivo`, {
+    headers: tok ? { Authorization: `Bearer ${tok}` } : {},
+  });
+  if (!r.ok) throw new ApiError(r.status, await r.text());
+  return URL.createObjectURL(await r.blob());
+}
+
+export const patchMidia = (id: number, descricao: string) =>
+  req<Midia>(`/midias/${id}`, { method: "PATCH", body: JSON.stringify({ descricao }) });

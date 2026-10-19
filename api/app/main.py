@@ -22,11 +22,12 @@ _em_producao = bool(os.getenv("RAILWAY_ENVIRONMENT"))  # setada pelo Railway
 _backend = "PostgreSQL" if _url.startswith("postgresql") else "SQLite (dev)"
 
 if _em_producao and _url.startswith("sqlite"):
+    # Em produção NUNCA rodar no SQLite efêmero (perde dados a cada deploy).
     sys.exit(
-        "ERRO FATAL: DATABASE_URL nao definido em producao. "
-        "Referencie o Postgres no servico (Variables -> DATABASE_URL = "
-        "${{Postgres.DATABASE_URL}}) e aplique. O app nao vai subir no "
-        "SQLite efemero para nao perder dados."
+        "ERRO FATAL: DATABASE_URL não definido em produção.\n"
+        "Referencie o Postgres no serviço (Variables → DATABASE_URL = "
+        "${{Postgres.DATABASE_URL}}) e aplique. O app não vai subir no "
+        "SQLite efêmero para não perder dados."
     )
 
 print(f"[Ponte Visual] Banco em uso: {_backend}", flush=True)

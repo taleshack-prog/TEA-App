@@ -1,16 +1,15 @@
-/** T3 — Registrar evento (crise, euforia, introspecção, alegria intensa).
- *  Tipo → detalhes (intensidade, gatilho, intervenção, resultado). Offline-aware.
- *  O tipo mostra seu filete semântico de 3px (cor informativa, nunca decorativa). */
+/** Registrar um momento — crise, euforia, introspecção, alegria. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Campo, EnergyBar, SegmentedControl } from "../components/ui";
+import { Button, Field, EnergyBar, SegmentedControl, inputStyle } from "../components/ui";
+import { IconBack } from "../components/icons";
 import { registrarEvento } from "../lib/sync";
 
 const TIPOS = [
-  { value: "crise", label: "CRISE", cor: "var(--sem-crise)" },
-  { value: "euforia", label: "EUFORIA", cor: "var(--sem-euforia)" },
-  { value: "introspeccao", label: "INTROSPECÇÃO", cor: "var(--sem-introspeccao)" },
-  { value: "alegria_intensa", label: "ALEGRIA", cor: "var(--sem-alegria)" },
+  { value: "crise", label: "Crise", cor: "var(--crise)" },
+  { value: "euforia", label: "Euforia", cor: "var(--euforia)" },
+  { value: "introspeccao", label: "Introspecção", cor: "var(--introspeccao)" },
+  { value: "alegria_intensa", label: "Alegria intensa", cor: "var(--alegria)" },
 ];
 
 export function Evento() {
@@ -28,95 +27,68 @@ export function Evento() {
     setEnviando(true);
     try {
       const r = await registrarEvento({
-        tipo,
-        inicio: new Date().toISOString(),
-        intensidade_1_5: intensidade,
-        gatilho_percebido: gatilho || null,
-        intervencao_tentada: intervencao || null,
+        tipo, inicio: new Date().toISOString(), intensidade_1_5: intensidade,
+        gatilho_percebido: gatilho || null, intervencao_tentada: intervencao || null,
         resultado,
       });
-      setMsg(r.enviado ? "Evento registrado." : "Salvo offline — enviará ao reconectar.");
-      setTimeout(() => nav("/"), 700);
-    } catch {
-      setMsg("Erro ao registrar.");
-      setEnviando(false);
-    }
+      setMsg(r.enviado ? "Momento registrado." : "Salvo — enviaremos quando voltar a conexão.");
+      setTimeout(() => nav("/"), 800);
+    } catch { setMsg("Não deu para salvar."); setEnviando(false); }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <h1 className="t-h1">Registrar evento</h1>
+    <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={() => nav("/")} style={{ background: "none", border: "none",
+          cursor: "pointer", color: "var(--ink)", padding: 4, display: "flex" }}>
+          <IconBack />
+        </button>
+        <h1 className="t-h1">Um momento</h1>
+      </div>
 
-      <Campo titulo="O que foi?">
-        <div style={{ display: "flex", flexDirection: "column",
-                      border: "1px solid var(--hairline)" }}>
-          {TIPOS.map((t, i) => {
+      <Field label="O que foi?">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {TIPOS.map((t) => {
             const sel = tipo === t.value;
             return (
-              <button
-                key={t.value}
-                onClick={() => setTipo(t.value)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12, minHeight: 52,
-                  padding: "0 14px", cursor: "pointer", border: "none",
-                  borderTop: i ? "1px solid var(--hairline)" : "none",
-                  background: sel ? "var(--surface)" : "transparent",
-                  textAlign: "left",
-                }}
-              >
-                <span style={{ width: 3, height: 24, background: t.cor }} />
-                <span style={{
-                  fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: 14,
-                  letterSpacing: "0.05em", color: "var(--text-primary)",
-                }}>{t.label}</span>
-                {sel && <span className="t-mono"
-                  style={{ marginLeft: "auto", color: "var(--accent)" }}>●</span>}
+              <button key={t.value} type="button" onClick={() => setTipo(t.value)}
+                style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 56,
+                  padding: "0 18px", cursor: "pointer", borderRadius: "var(--r)",
+                  border: sel ? "2px solid " + t.cor : "1.5px solid var(--line)",
+                  background: sel ? "var(--surface)" : "var(--surface)",
+                  boxShadow: sel ? "var(--shadow)" : "none", textAlign: "left" }}>
+                <span style={{ width: 14, height: 14, borderRadius: "50%", background: t.cor }} />
+                <span style={{ fontWeight: 700, fontSize: 16, flex: 1 }}>{t.label}</span>
               </button>
             );
           })}
         </div>
-      </Campo>
+      </Field>
 
       {tipo && (
         <>
-          <Campo titulo="Intensidade">
-            <EnergyBar value={intensidade} onChange={setIntensidade} />
-          </Campo>
-          <Campo titulo="Gatilho percebido (opcional)">
+          <Field label="Intensidade"><EnergyBar value={intensidade} onChange={setIntensidade} /></Field>
+          <Field label="O que você acha que provocou?" hint="Opcional.">
             <input value={gatilho} onChange={(e) => setGatilho(e.target.value)}
-                   style={inputStyle} placeholder="Ex.: barulho, mudança de rotina" />
-          </Campo>
-          <Campo titulo="Intervenção tentada (opcional)">
+              placeholder="Ex.: barulho, mudança de rotina" style={inputStyle} />
+          </Field>
+          <Field label="O que você tentou?" hint="Opcional.">
             <input value={intervencao} onChange={(e) => setIntervencao(e.target.value)}
-                   style={inputStyle} placeholder="Ex.: ambiente calmo" />
-          </Campo>
-          <Campo titulo="Resultado">
-            <SegmentedControl
-              options={[
-                { label: "Melhorou", value: "melhorou" },
-                { label: "Igual", value: "igual" },
-                { label: "Piorou", value: "piorou" },
-              ]}
-              value={resultado} onChange={setResultado}
-            />
-          </Campo>
+              placeholder="Ex.: levar para um lugar calmo" style={inputStyle} />
+          </Field>
+          <Field label="E como ficou depois?">
+            <SegmentedControl value={resultado} onChange={setResultado}
+              options={[{ label: "Melhorou", value: "melhorou" },
+                { label: "Igual", value: "igual" }, { label: "Piorou", value: "piorou" }]} />
+          </Field>
         </>
       )}
 
-      {msg && <p className="t-mono" style={{ fontSize: 13, color: "var(--accent)" }}>{msg}</p>}
+      {msg && <div style={{ background: "var(--primary-tint)", color: "var(--primary-dark)",
+        borderRadius: "var(--r-sm)", padding: "12px 14px", fontWeight: 700 }}>{msg}</div>}
 
-      <div style={{ display: "flex", gap: 12 }}>
-        <Button variant="ghost" full={false} onClick={() => nav("/")}>Cancelar</Button>
-        <Button disabled={!tipo || enviando} onClick={salvar}>
-          {enviando ? "Salvando…" : "Registrar"}
-        </Button>
-      </div>
+      {tipo && <Button disabled={enviando} onClick={salvar}>
+        {enviando ? "Salvando…" : "Registrar momento"}</Button>}
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  height: 48, padding: "0 12px", border: "1px solid var(--hairline)",
-  borderRadius: "var(--radius)", background: "var(--surface)",
-  color: "var(--text-primary)", fontFamily: "var(--font-ui)", fontSize: 16,
-};

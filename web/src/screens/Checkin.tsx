@@ -1,11 +1,10 @@
-/** T2 — Check-in rápido (<60s, ≤3 passos).
- *  Passo 1: humor + energia (essenciais). Passo 2: sono + alimentação.
- *  Passo 3 (opcional): observação + medicação. Envio offline-aware. */
+/** Check-in rápido — 3 passos. Humor + energia são o essencial. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Button, Campo, EnergyBar, MoodSelector, SegmentedControl, SleepStepper,
+  Button, Field, EnergyBar, MoodSelector, SegmentedControl, SleepStepper, inputStyle,
 } from "../components/ui";
+import { IconBack } from "../components/icons";
 import { registrarCheckin } from "../lib/sync";
 import type { SinalIn } from "../lib/api";
 
@@ -15,7 +14,6 @@ export function Checkin() {
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Estado do sinal
   const [humor, setHumor] = useState<string | null>(null);
   const [energia, setEnergia] = useState(3);
   const [horasSono, setHorasSono] = useState(8);
@@ -24,105 +22,84 @@ export function Checkin() {
   const [obs, setObs] = useState("");
   const [medicacao, setMedicacao] = useState<string | null>(null);
 
-  const podeAvancar = passo > 1 || humor !== null; // essenciais: humor + energia
-
   async function concluir() {
     if (!humor) return;
-    setEnviando(true);
-    setMsg(null);
+    setEnviando(true); setMsg(null);
     const sinal: SinalIn = {
-      humor,
-      energia_1_5: energia,
-      horas_sono: horasSono,
-      qualidade_sono_1_5: qualidadeSono,
-      alimentacao,
-      medicacao: medicacao === "sim",
-      observacao_livre: obs || null,
+      humor, energia_1_5: energia, horas_sono: horasSono,
+      qualidade_sono_1_5: qualidadeSono, alimentacao,
+      medicacao: medicacao === "sim", observacao_livre: obs || null,
     };
     try {
       const r = await registrarCheckin({ tipo: "livre", sinal });
-      setMsg(r.enviado ? "Registrado." : "Salvo offline — enviará ao reconectar.");
-      setTimeout(() => nav("/"), 700);
+      setMsg(r.enviado ? "Registrado. Obrigado." : "Salvo — enviaremos quando voltar a conexão.");
+      setTimeout(() => nav("/"), 800);
     } catch {
-      setMsg("Erro ao registrar.");
-      setEnviando(false);
+      setMsg("Não deu para salvar. Tente de novo."); setEnviando(false);
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1 className="t-h1">Check-in</h1>
-        <span className="t-mono" style={{ color: "var(--text-secondary)" }}>
-          {passo}/3
-        </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={() => passo > 1 ? setPasso(passo - 1) : nav("/")}
+          style={{ background: "none", border: "none", cursor: "pointer",
+            color: "var(--ink)", padding: 4, display: "flex" }}>
+          <IconBack />
+        </button>
+        <h1 className="t-h1" style={{ flex: 1 }}>Check-in</h1>
+        <span className="t-sub">{passo} de 3</span>
+      </div>
+
+      <div style={{ display: "flex", gap: 6 }}>
+        {[1, 2, 3].map((n) => (
+          <div key={n} style={{ flex: 1, height: 6, borderRadius: 3,
+            background: n <= passo ? "var(--primary)" : "var(--line)" }} />
+        ))}
       </div>
 
       {passo === 1 && (
         <>
-          <Campo titulo="Como ele está">
+          <Field label="Como ele está?">
             <MoodSelector value={humor} onChange={setHumor} />
-          </Campo>
-          <Campo titulo="Energia">
+          </Field>
+          <Field label="Nível de energia">
             <EnergyBar value={energia} onChange={setEnergia} />
-          </Campo>
+          </Field>
         </>
       )}
 
       {passo === 2 && (
         <>
-          <Campo titulo="Sono">
-            <SleepStepper
-              horas={horasSono} qualidade={qualidadeSono}
-              onHoras={setHorasSono} onQualidade={setQualidadeSono}
-            />
-          </Campo>
-          <Campo titulo="Alimentação">
-            <SegmentedControl
-              options={[
-                { label: "Normal", value: "normal" },
-                { label: "Alterada", value: "alterada" },
-                { label: "Recusa", value: "recusa" },
-              ]}
-              value={alimentacao} onChange={setAlimentacao}
-            />
-          </Campo>
+          <Field label="Sono"><SleepStepper horas={horasSono} qualidade={qualidadeSono}
+            onHoras={setHorasSono} onQualidade={setQualidadeSono} /></Field>
+          <Field label="Alimentação">
+            <SegmentedControl value={alimentacao} onChange={setAlimentacao}
+              options={[{ label: "Normal", value: "normal" },
+                { label: "Alterada", value: "alterada" }, { label: "Recusa", value: "recusa" }]} />
+          </Field>
         </>
       )}
 
       {passo === 3 && (
         <>
-          <Campo titulo="Observação (opcional)">
-            <textarea
-              value={obs} onChange={(e) => setObs(e.target.value)} rows={3}
-              placeholder="O que chamou atenção?"
-              style={{
-                padding: 12, border: "1px solid var(--hairline)",
-                borderRadius: "var(--radius)", background: "var(--surface)",
-                color: "var(--text-primary)", fontFamily: "var(--font-ui)", fontSize: 16,
-                resize: "vertical",
-              }}
-            />
-          </Campo>
-          <Campo titulo="Tomou medicação?">
-            <SegmentedControl
-              options={[{ label: "Sim", value: "sim" }, { label: "Não", value: "nao" }]}
-              value={medicacao} onChange={setMedicacao}
-            />
-          </Campo>
+          <Field label="Quer anotar algo?" hint="Opcional — o que chamou sua atenção.">
+            <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3}
+              style={{ ...inputStyle, height: "auto", padding: 14, resize: "vertical" }} />
+          </Field>
+          <Field label="Tomou medicação?">
+            <SegmentedControl value={medicacao} onChange={setMedicacao}
+              options={[{ label: "Sim", value: "sim" }, { label: "Não", value: "nao" }]} />
+          </Field>
         </>
       )}
 
-      {msg && <p className="t-mono" style={{ fontSize: 13, color: "var(--accent)" }}>{msg}</p>}
+      {msg && <div style={{ background: "var(--primary-tint)", color: "var(--primary-dark)",
+        borderRadius: "var(--r-sm)", padding: "12px 14px", fontWeight: 700 }}>{msg}</div>}
 
-      <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-        {passo > 1 && (
-          <Button variant="ghost" full={false} onClick={() => setPasso(passo - 1)}>
-            Voltar
-          </Button>
-        )}
+      <div style={{ display: "flex", gap: 12 }}>
         {passo < 3 ? (
-          <Button disabled={!podeAvancar} onClick={() => setPasso(passo + 1)}>
+          <Button disabled={passo === 1 && !humor} onClick={() => setPasso(passo + 1)}>
             Continuar
           </Button>
         ) : (
@@ -132,20 +109,10 @@ export function Checkin() {
         )}
       </div>
 
-      {passo === 1 && (
-        <button
-          onClick={concluir}
-          disabled={!humor || enviando}
-          style={{
-            background: "none", border: "none", cursor: humor ? "pointer" : "default",
-            color: "var(--text-secondary)", fontFamily: "var(--font-ui)",
-            fontSize: 13, fontWeight: 700, letterSpacing: "0.05em",
-            textTransform: "uppercase", textDecoration: "underline",
-            opacity: humor ? 1 : 0.4,
-          }}
-        >
+      {passo === 1 && humor && (
+        <Button variant="ghost" onClick={concluir} disabled={enviando}>
           Salvar só o essencial
-        </button>
+        </Button>
       )}
     </div>
   );

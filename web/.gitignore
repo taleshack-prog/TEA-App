@@ -8,4 +8,3 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 dev-dist
-tsconfig.tsbuildinfo

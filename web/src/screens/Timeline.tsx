@@ -1,15 +1,20 @@
-/** T4 — Linha do tempo (tabela suíça: horário mono + filete + descrição). */
+/** Linha — o que foi registrado hoje, em cartões calorosos. */
 import { useEffect, useState } from "react";
+import { Card } from "../components/ui";
 import { timeline, type ItemTimeline } from "../lib/api";
 
-const COR_EVENTO: Record<string, string> = {
-  crise: "var(--sem-crise)", euforia: "var(--sem-euforia)",
-  introspeccao: "var(--sem-introspeccao)", alegria_intensa: "var(--sem-alegria)",
+const HUMOR_L: Record<string, string> = {
+  calmo: "Calmo", agitado: "Agitado", triste: "Triste", euforico: "Eufórico",
+  introspectivo: "Introspectivo", tenso: "Tenso", alegre: "Alegre",
 };
-
-function hora(iso: string): string {
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
+const EVT: Record<string, { l: string; c: string }> = {
+  crise: { l: "Crise", c: "var(--crise)" },
+  euforia: { l: "Euforia", c: "var(--euforia)" },
+  introspeccao: { l: "Introspecção", c: "var(--introspeccao)" },
+  alegria_intensa: { l: "Alegria intensa", c: "var(--alegria)" },
+};
+const hora = (iso: string) =>
+  new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
 export function Timeline() {
   const [itens, setItens] = useState<ItemTimeline[] | null>(null);
@@ -22,32 +27,35 @@ export function Timeline() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <h1 className="t-h1">Hoje</h1>
-      {erro && <p className="t-mono" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-        Sem conexão com a API.
-      </p>}
+
+      {erro && <p className="t-sub">Sem conexão com o servidor agora.</p>}
       {itens && itens.length === 0 && (
-        <p className="t-mono" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-          Nenhum registro hoje ainda.
-        </p>
+        <Card style={{ background: "var(--surface-2)" }}>
+          <p style={{ fontWeight: 700 }}>Ainda não há registros hoje.</p>
+          <p className="t-small" style={{ marginTop: 4 }}>
+            Comece por um check-in na tela inicial.
+          </p>
+        </Card>
       )}
-      <div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {itens?.map((it) => {
-          const cor = it.tipo_item === "evento"
-            ? COR_EVENTO[String(it.evento)] ?? "var(--accent)"
-            : "var(--hairline)";
+          const evt = it.tipo_item === "evento" ? EVT[String(it.evento)] : null;
+          const cor = evt?.c ?? "var(--primary)";
           return (
-            <div key={`${it.tipo_item}-${it.id}`}
-                 style={{ display: "flex", gap: 12, alignItems: "center",
-                          padding: "12px 0", borderTop: "1px solid var(--hairline)" }}>
-              <span className="t-mono" style={{ fontSize: 13, minWidth: 48,
-                color: "var(--text-secondary)" }}>{hora(it.quando)}</span>
-              <span style={{ width: 3, alignSelf: "stretch", background: cor }} />
-              <span style={{ fontSize: 15 }}>
-                {it.tipo_item === "checkin" && `Check-in — ${String(it.humor ?? "").toUpperCase()}`}
-                {it.tipo_item === "evento" && `${String(it.evento).toUpperCase()} · I${it.intensidade_1_5}`}
-                {it.tipo_item === "midia" && `Mídia (${it.midia})`}
-              </span>
-            </div>
+            <Card key={`${it.tipo_item}-${it.id}`} style={{ padding: 16, display: "flex",
+              alignItems: "center", gap: 14 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: cor,
+                flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700 }}>
+                  {it.tipo_item === "checkin" && `Check-in · ${HUMOR_L[String(it.humor)] ?? ""}`}
+                  {it.tipo_item === "evento" && `${evt?.l ?? "Momento"} · intensidade ${it.intensidade_1_5}`}
+                  {it.tipo_item === "midia" && "Foto ou vídeo"}
+                </div>
+                <div className="t-small">{hora(String(it.quando))}</div>
+              </div>
+            </Card>
           );
         })}
       </div>

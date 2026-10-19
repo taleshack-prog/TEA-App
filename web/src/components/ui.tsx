@@ -1,77 +1,107 @@
-/** Componentes base do design system Swiss Clinical (TDD §6.6).
- *  Retangulares, raio 2px, caixa alta nos rótulos, sem emojis, sem sombras. */
+/** Kit de interface — acolhedor: cantos macios, cor calma, rótulos em frase. */
 import type { CSSProperties, ReactNode } from "react";
 
-/* -------- Button: primário invertido (fundo tinta, texto papel) -------- */
+/* ---------------- Button ---------------- */
 export function Button({
   children, onClick, variant = "primary", disabled, type = "button", full = true,
 }: {
   children: ReactNode;
   onClick?: () => void;
-  variant?: "primary" | "ghost";
+  variant?: "primary" | "soft" | "ghost";
   disabled?: boolean;
   type?: "button" | "submit";
   full?: boolean;
 }) {
   const base: CSSProperties = {
-    height: 54,
+    minHeight: 52,
     width: full ? "100%" : undefined,
-    padding: "0 24px",
-    borderRadius: "var(--radius)",
+    padding: "0 22px",
+    borderRadius: "var(--r)",
     fontFamily: "var(--font-ui)",
-    fontWeight: 700,
-    fontSize: 15,
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
+    fontWeight: 800,
+    fontSize: 16,
     cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.4 : 1,
-    transition: "opacity 150ms",
+    opacity: disabled ? 0.5 : 1,
+    transition: "transform 120ms, background 150ms",
+    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
   };
-  const skin: CSSProperties =
-    variant === "primary"
-      ? { background: "var(--text-primary)", color: "var(--bg)", border: "none" }
-      : { background: "transparent", color: "var(--text-primary)",
-          border: "1px solid var(--hairline)" };
+  const skins: Record<string, CSSProperties> = {
+    primary: { background: "var(--primary)", color: "var(--on-primary)",
+               border: "none", boxShadow: "var(--shadow)" },
+    soft: { background: "var(--primary-tint)", color: "var(--primary-dark)", border: "none" },
+    ghost: { background: "transparent", color: "var(--ink)",
+             border: "1.5px solid var(--line)" },
+  };
   return (
-    <button type={type} onClick={onClick} disabled={disabled} style={{ ...base, ...skin }}>
+    <button type={type} onClick={onClick} disabled={disabled}
+      style={{ ...base, ...skins[variant] }}>
       {children}
     </button>
   );
 }
 
-/* -------- MoodSelector: 7 opções tipográficas, selecionado = bloco invertido -------- */
-export const HUMORES = [
-  "CALMO", "AGITADO", "TRISTE", "EUFÓRICO", "INTROSPECTIVO", "TENSO", "ALEGRE",
-] as const;
+/* ---------------- Card ---------------- */
+export function Card({ children, style, onClick }: {
+  children: ReactNode; style?: CSSProperties; onClick?: () => void;
+}) {
+  return (
+    <div onClick={onClick}
+      style={{
+        background: "var(--surface)", borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow)", padding: "var(--s5)",
+        cursor: onClick ? "pointer" : undefined, ...style,
+      }}>
+      {children}
+    </div>
+  );
+}
 
-const HUMOR_VALOR: Record<string, string> = {
-  CALMO: "calmo", AGITADO: "agitado", TRISTE: "triste", "EUFÓRICO": "euforico",
-  INTROSPECTIVO: "introspectivo", TENSO: "tenso", ALEGRE: "alegre",
+/* ---------------- Field ---------------- */
+export function Field({ label, hint, children }: {
+  label: string; hint?: string; children: ReactNode;
+}) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <span style={{ fontWeight: 700, fontSize: 15 }}>{label}</span>
+      {children}
+      {hint && <span className="t-small">{hint}</span>}
+    </label>
+  );
+}
+
+export const inputStyle: CSSProperties = {
+  height: 52, padding: "0 16px", border: "1.5px solid var(--line)",
+  borderRadius: "var(--r-sm)", background: "var(--surface)",
+  color: "var(--ink)", fontFamily: "var(--font-ui)", fontSize: 16, width: "100%",
 };
 
-export function MoodSelector({
-  value, onChange,
-}: { value: string | null; onChange: (v: string) => void }) {
+/* ---------------- MoodSelector ---------------- */
+export const HUMORES = [
+  { v: "calmo", l: "Calmo" }, { v: "agitado", l: "Agitado" },
+  { v: "triste", l: "Triste" }, { v: "euforico", l: "Eufórico" },
+  { v: "introspectivo", l: "Introspectivo" }, { v: "tenso", l: "Tenso" },
+  { v: "alegre", l: "Alegre" },
+];
+
+export function MoodSelector({ value, onChange }: {
+  value: string | null; onChange: (v: string) => void;
+}) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1,
-                  background: "var(--hairline)", border: "1px solid var(--hairline)" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
       {HUMORES.map((h) => {
-        const val = HUMOR_VALOR[h];
-        const sel = value === val;
+        const sel = value === h.v;
         return (
-          <button
-            key={h}
-            onClick={() => onChange(val)}
+          <button key={h.v} type="button" onClick={() => onChange(h.v)}
             aria-pressed={sel}
             style={{
-              minHeight: 48, border: "none", cursor: "pointer",
-              fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: 13,
-              letterSpacing: "0.05em",
-              background: sel ? "var(--text-primary)" : "var(--surface)",
-              color: sel ? "var(--bg)" : "var(--text-primary)",
-            }}
-          >
-            {h}
+              minHeight: 46, padding: "0 18px", borderRadius: "var(--r-pill)",
+              border: sel ? "1.5px solid var(--primary)" : "1.5px solid var(--line)",
+              background: sel ? "var(--primary)" : "var(--surface)",
+              color: sel ? "var(--on-primary)" : "var(--ink)",
+              fontWeight: 700, fontSize: 15, cursor: "pointer",
+              transition: "background 150ms",
+            }}>
+            {h.l}
           </button>
         );
       })}
@@ -79,58 +109,50 @@ export function MoodSelector({
   );
 }
 
-/* -------- EnergyBar: 5 blocos segmentados preenchidos em tinta -------- */
-export function EnergyBar({
-  value, onChange,
-}: { value: number; onChange: (v: number) => void }) {
+/* ---------------- EnergyBar (1–5) ---------------- */
+export function EnergyBar({ value, onChange }: {
+  value: number; onChange: (v: number) => void;
+}) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{ display: "flex", gap: 4, flex: 1 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ display: "flex", gap: 8, flex: 1 }}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            onClick={() => onChange(n)}
-            aria-label={`Energia ${n} de 5`}
+          <button key={n} type="button" onClick={() => onChange(n)}
+            aria-label={`Nível ${n} de 5`}
             style={{
-              flex: 1, height: 36, border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius)", cursor: "pointer",
-              background: n <= value ? "var(--text-primary)" : "transparent",
-            }}
-          />
+              flex: 1, height: 44, borderRadius: "var(--r-sm)", cursor: "pointer",
+              border: "1.5px solid " + (n <= value ? "var(--primary)" : "var(--line)"),
+              background: n <= value ? "var(--primary)" : "var(--surface)",
+              transition: "background 120ms",
+            }} />
         ))}
       </div>
-      <span className="t-mono" style={{ fontSize: 15, minWidth: 34 }}>{value}/5</span>
+      <span style={{ fontWeight: 800, minWidth: 34, textAlign: "right",
+        color: "var(--primary-dark)" }}>{value}/5</span>
     </div>
   );
 }
 
-/* -------- SegmentedControl: texto em caixa alta -------- */
-export function SegmentedControl({
-  options, value, onChange,
-}: {
+/* ---------------- SegmentedControl ---------------- */
+export function SegmentedControl({ options, value, onChange }: {
   options: { label: string; value: string }[];
-  value: string | null;
-  onChange: (v: string) => void;
+  value: string | null; onChange: (v: string) => void;
 }) {
   return (
-    <div style={{ display: "flex", border: "1px solid var(--hairline)",
-                  borderRadius: "var(--radius)", overflow: "hidden" }}>
-      {options.map((o, i) => {
+    <div style={{ display: "flex", gap: 8, background: "var(--surface-2)",
+      padding: 4, borderRadius: "var(--r-pill)", flexWrap: "wrap" }}>
+      {options.map((o) => {
         const sel = value === o.value;
         return (
-          <button
-            key={o.value}
-            onClick={() => onChange(o.value)}
+          <button key={o.value} type="button" onClick={() => onChange(o.value)}
             style={{
-              flex: 1, minHeight: 44, cursor: "pointer",
-              borderLeft: i ? "1px solid var(--hairline)" : "none", border: "none",
-              borderLeftWidth: i ? 1 : 0,
-              fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: 12,
-              letterSpacing: "0.05em", textTransform: "uppercase",
-              background: sel ? "var(--text-primary)" : "transparent",
-              color: sel ? "var(--bg)" : "var(--text-primary)",
-            }}
-          >
+              flex: "1 1 auto", minHeight: 42, padding: "0 14px",
+              borderRadius: "var(--r-pill)", border: "none", cursor: "pointer",
+              fontWeight: 700, fontSize: 14,
+              background: sel ? "var(--surface)" : "transparent",
+              color: sel ? "var(--primary-dark)" : "var(--ink-soft)",
+              boxShadow: sel ? "var(--shadow)" : "none",
+            }}>
             {o.label}
           </button>
         );
@@ -139,50 +161,34 @@ export function SegmentedControl({
   );
 }
 
-/* -------- SleepStepper: horas em stepper mono + qualidade em 5 blocos -------- */
-export function SleepStepper({
-  horas, qualidade, onHoras, onQualidade,
-}: {
+/* ---------------- SleepStepper ---------------- */
+export function SleepStepper({ horas, qualidade, onHoras, onQualidade }: {
   horas: number; qualidade: number;
   onHoras: (h: number) => void; onQualidade: (q: number) => void;
 }) {
+  const btn: CSSProperties = {
+    width: 46, height: 46, borderRadius: "var(--r-sm)",
+    border: "1.5px solid var(--line)", background: "var(--surface)",
+    color: "var(--ink)", fontSize: 22, cursor: "pointer", fontWeight: 700,
+  };
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <StepBtn onClick={() => onHoras(Math.max(0, horas - 0.5))}>−</StepBtn>
-        <span className="t-mono" style={{ fontSize: 22, minWidth: 64, textAlign: "center" }}>
-          {horas}H
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <button type="button" style={btn}
+          onClick={() => onHoras(Math.max(0, horas - 0.5))}>−</button>
+        <span style={{ fontWeight: 800, fontSize: 20, minWidth: 72, textAlign: "center" }}>
+          {horas}h
         </span>
-        <StepBtn onClick={() => onHoras(Math.min(24, horas + 0.5))}>+</StepBtn>
-        <span className="t-label" style={{ marginLeft: 4 }}>horas de sono</span>
+        <button type="button" style={btn}
+          onClick={() => onHoras(Math.min(24, horas + 0.5))}>+</button>
+        <span className="t-sub" style={{ marginLeft: 2 }}>de sono</span>
       </div>
-      <EnergyBar value={qualidade} onChange={onQualidade} />
-    </div>
-  );
-}
-
-function StepBtn({ children, onClick }: { children: ReactNode; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: 44, height: 44, border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius)", background: "transparent",
-        color: "var(--text-primary)", fontSize: 22, cursor: "pointer",
-        fontFamily: "var(--font-mono)",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* -------- Label de campo -------- */
-export function Campo({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <span className="t-label">{titulo}</span>
-      {children}
+      <div>
+        <span className="t-sub" style={{ display: "block", marginBottom: 6 }}>
+          Qualidade do sono
+        </span>
+        <EnergyBar value={qualidade} onChange={onQualidade} />
+      </div>
     </div>
   );
 }
