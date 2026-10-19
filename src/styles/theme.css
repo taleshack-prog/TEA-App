@@ -1,0 +1,111 @@
+/* Ponte Visual 2.0 — Design System "Swiss Clinical" v2.3 (TDD §6).
+   Regras: sem emojis; raio máx 4px; sem sombras difusas; cor é informativa,
+   nunca decorativa; dados numéricos em mono; hierarquia por hairlines + peso. */
+
+:root {
+  /* Cores — modo claro */
+  --bg: #f4f2ee;
+  --surface: #ffffff;
+  --text-primary: #111111;
+  --text-secondary: #6e6b64;
+  --hairline: #d9d6ce;
+  --accent: #1d5fbf;
+
+  /* Semânticas de evento (só como filete 3px e ponto marcador) */
+  --sem-crise: #c0392b;
+  --sem-euforia: #a67c00;
+  --sem-introspeccao: #4a2e7f;
+  --sem-alegria: #3e8e41;
+
+  /* Barra do espectro (único elemento multicolor) */
+  --spec-1: #c0392b;
+  --spec-2: #e07b39;
+  --spec-3: #e8b90f;
+  --spec-4: #3e8e41;
+  --spec-5: #1d5fbf;
+  --spec-6: #5b3a8e;
+
+  /* Tipografia */
+  --font-ui: "Archivo", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Forma e espaço */
+  --radius: 2px;
+  --radius-max: 4px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 16px;
+  --s4: 24px;
+  --s5: 32px;
+  --s6: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c;
+    --surface: #141414;
+    --text-primary: #ededea;
+    --text-secondary: #8a8a85;
+    --hairline: #262626;
+    --accent: #6fa8dc;
+    --sem-crise: #e07b5a;
+    --sem-euforia: #f0c419;
+    --sem-introspeccao: #9c7bd8;
+    --sem-alegria: #7fbf7f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c;
+  --surface: #141414;
+  --text-primary: #ededea;
+  --text-secondary: #8a8a85;
+  --hairline: #262626;
+  --accent: #6fa8dc;
+  --sem-crise: #e07b5a;
+  --sem-euforia: #f0c419;
+  --sem-introspeccao: #9c7bd8;
+  --sem-alegria: #7fbf7f;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Escala tipográfica 34/28/22/17/15/13 */
+.t-display { font-size: 34px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; }
+.t-h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+.t-h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.t-body { font-size: 17px; font-weight: 400; }
+.t-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+.t-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.hairline { border: none; border-top: 1px solid var(--hairline); }
+
+a { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
