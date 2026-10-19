@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SpectrumBar } from "./SpectrumBar";
-import { IconHome, IconTimeline, IconAlbum, IconResumo, IconGear } from "./icons";
+import { IconHome, IconTimeline, IconAlbum, IconResumo, IconGear, IconBook } from "./icons";
 import { useAuth } from "../lib/auth";
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -13,6 +13,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const abas = [
     { to: "/", label: "Hoje", Icon: IconHome },
     { to: "/album", label: "Álbum", Icon: IconAlbum },
+    { to: "/livro", label: "Livro", Icon: IconBook },
     { to: "/timeline", label: "Linha", Icon: IconTimeline },
     ...(perfil?.ve_analise_ia
       ? [{ to: "/resumo", label: "Resumo", Icon: IconResumo }] : []),

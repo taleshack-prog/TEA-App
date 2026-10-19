@@ -40,3 +40,13 @@ export const IconPlay = ({ size }: P) => (
 export const IconBack = ({ size }: P) => (
   <svg {...base(size)}><path d="M15 5l-7 7 7 7" /></svg>
 );
+export const IconBook = ({ size }: P) => (
+  <svg {...base(size)}><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3V4Z" />
+    <path d="M17 7h2v16H8a3 3 0 0 0-3 3" opacity="0" /></svg>
+);
+export const IconPause = ({ size }: P) => (
+  <svg {...base(size)}><path d="M8 5v14M16 5v14" /></svg>
+);
+export const IconStop = ({ size }: P) => (
+  <svg {...base(size)}><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+);

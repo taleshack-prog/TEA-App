@@ -8,6 +8,7 @@ import { Checkin } from "./screens/Checkin";
 import { Evento } from "./screens/Evento";
 import { Timeline } from "./screens/Timeline";
 import { Album } from "./screens/Album";
+import { Biblioteca } from "./screens/Biblioteca";
 import { Digest } from "./screens/Digest";
 import { Config } from "./screens/Config";
 
@@ -24,6 +25,7 @@ function Protegido() {
         <Route path="/checkin" element={<Checkin />} />
         <Route path="/evento" element={<Evento />} />
         <Route path="/album" element={<Album />} />
+        <Route path="/livro" element={<Biblioteca />} />
         <Route path="/timeline" element={<Timeline />} />
         <Route path="/resumo" element={<Digest />} />
         <Route path="/ajustes" element={<Config />} />
