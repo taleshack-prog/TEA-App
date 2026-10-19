@@ -1,23 +1,62 @@
+"""Ponte Visual 2.0 — API (FastAPI).
+
+Canal Comportamental (primário) + Canal de Arte (dormente) + Recepção.
+Pipeline de IA Nível 0 (estatística) ativo; níveis superiores entram por volume.
+"""
+import os
+import sys
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import leads, webhook, dashboard
-from app.core.database import engine, Base
 
+from app.config import settings
+from app.database import Base, engine
+from app import models  # noqa: F401  (registra as tabelas em Base.metadata)
+from app.routers import (
+    analises, arte, auth, checkins, config, eventos, midias, timeline,
+)
+
+# --- Verificação de banco no boot (anti-SQLite-fantasma) ---------------
+_url = settings.sqlalchemy_url
+_em_producao = bool(os.getenv("RAILWAY_ENVIRONMENT"))  # setada pelo Railway
+_backend = "PostgreSQL" if _url.startswith("postgresql") else "SQLite (dev)"
+
+if _em_producao and _url.startswith("sqlite"):
+    sys.exit(
+        "ERRO FATAL: DATABASE_URL nao definido em producao. "
+        "Referencie o Postgres no servico (Variables -> DATABASE_URL = "
+        "${{Postgres.DATABASE_URL}}) e aplique. O app nao vai subir no "
+        "SQLite efemero para nao perder dados."
+    )
+
+print(f"[Ponte Visual] Banco em uso: {_backend}", flush=True)
+
+# Cria as tabelas se não existirem (piloto single-tenant; depois trocar por Alembic).
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Tribut Med API", version="1.0.0")
+app = FastAPI(
+    title="Ponte Visual 2.0 — API",
+    version="2.0.0",
+    description="Diário comportamental estruturado + canal de arte dormente. "
+                "Hack Tech Farm.",
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,  # definido por CORS_ORIGINS
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(leads.router,     prefix="/api/leads",     tags=["leads"])
-app.include_router(webhook.router,   prefix="/api/webhook",   tags=["webhook"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+for r in (auth, checkins, eventos, midias, timeline, config, analises, arte):
+    app.include_router(r.router)
 
-@app.get("/")
-def root():
-    return {"status": "ok", "service": "Tribut Med API"}
+
+@app.get("/", tags=["saude"])
+def raiz():
+    return {"app": "Ponte Visual 2.0", "status": "ok", "banco": _backend, "docs": "/docs"}
+
+
+@app.get("/saude", tags=["saude"])
+def saude():
+    return {"status": "healthy", "banco": _backend}
