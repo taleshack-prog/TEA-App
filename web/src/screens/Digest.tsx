@@ -2,7 +2,11 @@
  *  nunca diagnóstico. Abaixo do mínimo de dados, não afirma nada. */
 import { useEffect, useState } from "react";
 import { Card, SegmentedControl } from "../components/ui";
-import { analiseDescritiva, ApiError, type AnaliseDescritiva } from "../lib/api";
+import { IconResumo } from "../components/icons";
+import {
+  analiseDescritiva, ApiError, leituraIA,
+  type AnaliseDescritiva, type LeituraIA,
+} from "../lib/api";
 
 const HUMOR_L: Record<string, string> = {
   calmo: "Calmo", agitado: "Agitado", triste: "Triste", euforico: "Eufórico",
@@ -52,6 +56,12 @@ export function Digest() {
       <SegmentedControl value={String(dias)} onChange={(v) => setDias(Number(v))}
         options={[{ label: "7 dias", value: "7" }, { label: "30 dias", value: "30" }]} />
 
+      <LeituraCard dias={dias} />
+
+      {estado === "ok" && dado?.dados_suficientes && (
+        <h2 className="t-h2" style={{ marginTop: 4 }}>Os números por trás</h2>
+      )}
+
       {estado === "load" && <p className="t-sub">Preparando o resumo…</p>}
       {estado === "proibido" && <p className="t-sub">O resumo é visível apenas para os pais.</p>}
       {estado === "erro" && <p className="t-sub">Sem conexão com o servidor agora.</p>}
@@ -60,6 +70,65 @@ export function Digest() {
         ? <Pronto a={dado} dias={dias} />
         : <Guardrail aviso={dado.aviso} />)}
     </div>
+  );
+}
+
+function LeituraCard({ dias }: { dias: number }) {
+  const [d, setD] = useState<LeituraIA | null>(null);
+  const [estado, setEstado] = useState<"load" | "ok" | "erro">("load");
+
+  useEffect(() => {
+    let vivo = true; setEstado("load");
+    leituraIA(dias)
+      .then((r) => { if (vivo) { setD(r); setEstado("ok"); } })
+      .catch(() => { if (vivo) setEstado("erro"); });
+    return () => { vivo = false; };
+  }, [dias]);
+
+  return (
+    <Card style={{ background: "var(--primary-tint)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10,
+        color: "var(--primary-dark)" }}>
+        <IconResumo /><h2 className="t-h2" style={{ color: "var(--primary-dark)" }}>Leitura da IA</h2>
+      </div>
+
+      {estado === "load" && <p className="t-sub">A IA está lendo os registros…</p>}
+      {estado === "erro" && <p className="t-sub">Não consegui falar com a IA agora.</p>}
+
+      {estado === "ok" && d && (
+        <>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: 19, lineHeight: 1.5 }}>
+            {d.leitura}
+          </p>
+
+          {d.hipoteses && d.hipoteses.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 18 }}>
+              {d.hipoteses.map((h, i) => (
+                <div key={i} style={{ borderLeft: "3px solid var(--primary)", paddingLeft: 14 }}>
+                  <p style={{ fontWeight: 600 }}>{h.texto}</p>
+                  {h.apoia_se_em && (
+                    <p className="t-small" style={{ marginTop: 3 }}>Apoia-se em: {h.apoia_se_em}</p>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                    <div style={{ flex: 1, height: 8, background: "var(--surface)",
+                      borderRadius: "var(--r-pill)", overflow: "hidden" }}>
+                      <div style={{ width: `${Math.round((h.confianca || 0) * 100)}%`,
+                        height: "100%", background: "var(--primary)" }} />
+                    </div>
+                    <span className="t-small">confiança {Math.round((h.confianca || 0) * 100)}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="t-small" style={{ marginTop: 16, color: "var(--primary-dark)" }}>
+            É uma leitura por hipótese, não um diagnóstico.
+            {!d.configurada && " Para leituras completas, ative a chave da IA no servidor."}
+          </p>
+        </>
+      )}
+    </Card>
   );
 }
 

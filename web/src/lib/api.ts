@@ -155,6 +155,23 @@ export function analiseDescritiva(dias: number): Promise<AnaliseDescritiva> {
   return req<AnaliseDescritiva>(`/analises/descritiva?${q}`);
 }
 
+/* -------- Leitura interpretativa da IA (Nível 3) -------- */
+export interface Hipotese { texto: string; confianca: number; apoia_se_em?: string }
+export interface LeituraIA {
+  configurada: boolean;
+  suficiente: boolean;
+  leitura: string;
+  hipoteses: Hipotese[];
+  erro?: string;
+}
+
+export function leituraIA(dias: number): Promise<LeituraIA> {
+  const fim = new Date();
+  const inicio = new Date(fim.getTime() - dias * 24 * 3600 * 1000);
+  const q = `inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`;
+  return req<LeituraIA>(`/analises/narrativa?${q}`);
+}
+
 /* -------- Galeria de mídia (fotos/vídeos + descrição) -------- */
 export interface Midia {
   id: number;

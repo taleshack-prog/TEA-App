@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     S3_SECRET_KEY: str = ""
     S3_REGION: str = "us-east-1"
 
+    # IA — leitura interpretativa (Nível 3). Sem a chave, a tela avisa.
+    ANTHROPIC_API_KEY: str = ""
+    IA_MODEL: str = "claude-3-5-haiku-latest"
+
     # Regras de negócio
     CHECKIN_EXPIRACAO_MIN: int = 120
 
