@@ -23,10 +23,12 @@ class Settings(BaseSettings):
     # Regras de negócio
     CHECKIN_EXPIRACAO_MIN: int = 120
 
-    # CORS: origens permitidas, separadas por vírgula.
-    # Dev padrão: Vite local. Produção: defina a URL do Vercel.
-    # "*" libera tudo (use só para o primeiro boot/teste).
-    CORS_ORIGINS: str = "http://localhost:5173"
+    # CORS: origens permitidas, separadas por vírgula. Já inclui o dev local e
+    # o domínio do app no Vercel, então funciona sem precisar definir env var.
+    # Para trocar o domínio, defina CORS_ORIGINS no Railway.
+    CORS_ORIGINS: str = (
+        "http://localhost:5173,https://tea-app-khaki.vercel.app"
+    )
 
     @property
     def cors_origins_list(self) -> list[str]:

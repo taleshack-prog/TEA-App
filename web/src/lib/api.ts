@@ -1,7 +1,15 @@
 /** Cliente da API Ponte Visual. Base configurável por VITE_API_URL.
  *  Guarda o token JWT em localStorage; expõe helpers tipados por endpoint. */
 
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// Descobre o endereço da API sozinho: em localhost usa o backend local;
+// publicado (Vercel), usa a API de produção no Railway. VITE_API_URL,
+// se definida, tem prioridade. Assim não dependemos de env var no build.
+const API_PRODUCAO = "https://tea-app-production-fb77.up.railway.app";
+const _ehLocal =
+  typeof location !== "undefined" &&
+  (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+const BASE =
+  import.meta.env.VITE_API_URL ?? (_ehLocal ? "http://localhost:8000" : API_PRODUCAO);
 const TOKEN_KEY = "pv_token";
 
 export function getToken(): string | null {
@@ -61,6 +69,23 @@ export async function login(email: string, senha: string): Promise<Perfil> {
 }
 
 export const me = () => req<Perfil>("/auth/eu");
+
+export interface PerfilCriar {
+  nome: string;
+  papel: string;
+  tipo: string;
+  ve_analise_ia: boolean;
+  email: string;
+  senha: string;
+}
+
+/** Cria uma conta. Lança ApiError(409) se o e-mail já existe. */
+export async function registrar(dados: PerfilCriar): Promise<Perfil> {
+  return req<Perfil>("/auth/registrar", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+}
 
 /* -------- Check-ins -------- */
 export interface SinalIn {

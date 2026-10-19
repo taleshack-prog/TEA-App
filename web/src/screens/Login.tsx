@@ -1,5 +1,6 @@
 /** Login simples (JWT). Credenciais do seed no backend. */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { SpectrumBar } from "../components/SpectrumBar";
 import { Button, Campo } from "../components/ui";
 import { useAuth } from "../lib/auth";
@@ -59,6 +60,11 @@ export function Login() {
         <Button type="submit" disabled={carregando}>
           {carregando ? "Entrando…" : "Entrar"}
         </Button>
+
+        <p className="t-mono" style={{ fontSize: 12, color: "var(--text-secondary)",
+          textAlign: "center" }}>
+          Não tem conta? <Link to="/cadastro" style={{ color: "var(--accent)" }}>Criar conta</Link>
+        </p>
       </form>
     </div>
   );
