@@ -44,6 +44,7 @@ LIVRO = _primeiro(RAIZ / "web/src/data/livro.json", RAIZ / "src/data/livro.json"
 SAIDA = (RAIZ / "web/public/audio") if (RAIZ / "web").exists() else (RAIZ / "public/audio")
 
 LIMITE_BYTES = 4800  # folga abaixo do teto de 5000 bytes por chamada da API
+MAX_FRASE = 380      # teto seguro (bytes) por frase — Chirp 3 HD recusa frases longas
 VOZES_FEM = [
     "pt-BR-Chirp3-HD-Leda",       # calorosa, equilibrada
     "pt-BR-Chirp3-HD-Aoede",      # suave
@@ -55,9 +56,57 @@ TEXTO_AMOSTRA = (
 )
 
 
+def _hard_wrap(s: str, limite: int) -> list[str]:
+    """Quebra dura por palavras quando nem a pontuação secundária resolve."""
+    out, buf = [], ""
+    for w in s.split(" "):
+        cand = (buf + " " + w).strip()
+        if len(cand.encode("utf-8")) > limite and buf:
+            out.append(buf)
+            buf = w
+        else:
+            buf = cand
+    if buf:
+        out.append(buf)
+    return out
+
+
+def _dividir_longa(s: str, limite: int = MAX_FRASE) -> list[str]:
+    """Frase longa demais -> quebra em vírgulas/;/:/travessão e, se preciso, palavras."""
+    if len(s.encode("utf-8")) <= limite:
+        return [s]
+    out: list[str] = []
+    for p in re.split(r"(?<=[;:,–—])\s+", s):
+        p = p.strip()
+        if not p:
+            continue
+        if len(p.encode("utf-8")) <= limite:
+            out.append(p)
+        else:
+            out.extend(_hard_wrap(p, limite))
+    return out
+
+
+def _como_frase(s: str) -> str:
+    """Garante que todo fragmento termine com pontuação — a API trata como frase."""
+    s = s.strip()
+    if not s:
+        return ""
+    if s[-1] in ".!?…":
+        return s
+    return s.rstrip(",;:–— ").rstrip() + "."
+
+
 def frases(texto: str) -> list[str]:
     t = re.sub(r"\s+", " ", texto).strip()
-    return re.findall(r"[^.!?…]+[.!?…]+|\S[^.!?…]*$", t) or [t]
+    brutas = re.findall(r"[^.!?…]+[.!?…]+|\S[^.!?…]*$", t) or [t]
+    out: list[str] = []
+    for s in brutas:
+        for frag in _dividir_longa(s.strip()):
+            f = _como_frase(frag)
+            if f:
+                out.append(f)
+    return out
 
 
 def em_pedacos(texto: str, limite: int = LIMITE_BYTES) -> list[str]:
@@ -124,12 +173,16 @@ def modo_amostras(cliente) -> None:
     print("  python gerar_audiolivro.py livro --voz pt-BR-Chirp3-HD-<Nome>")
 
 
-def modo_livro(cliente, voz: str) -> None:
+def modo_livro(cliente, voz: str, refazer: bool = False) -> None:
     SAIDA.mkdir(parents=True, exist_ok=True)
     livro = carregar_livro()
     caps = livro["capitulos"]
     total_chars = 0
     for cap in caps:
+        destino = SAIDA / f"cap-{cap['id']}.mp3"
+        if destino.exists() and not refazer:
+            print(f"  cap {cap['id']:>2}: já existe, pulando  ({destino.name})")
+            continue
         pedacos = em_pedacos(cap["texto"])
         total_chars += sum(len(p) for p in pedacos)
         print(f"  cap {cap['id']:>2}: {cap['titulo'][:48]:<48} "
@@ -138,7 +191,6 @@ def modo_livro(cliente, voz: str) -> None:
         for i, p in enumerate(pedacos, 1):
             partes.append(sintetizar(cliente, p, voz))
             print(f"      pedaço {i}/{len(pedacos)}", end="\r", flush=True)
-        destino = SAIDA / f"cap-{cap['id']}.mp3"
         destino.write_bytes(b"".join(partes))
         reencode_opcional(destino)
         kb = destino.stat().st_size // 1024
@@ -159,13 +211,15 @@ def main() -> None:
     pl = sub.add_parser("livro", help="gera o livro inteiro")
     pl.add_argument("--voz", default="pt-BR-Chirp3-HD-Leda",
                     help="nome da voz (padrão: pt-BR-Chirp3-HD-Leda)")
+    pl.add_argument("--refazer", action="store_true",
+                    help="regera todos os capítulos, mesmo os que já existem")
     args = ap.parse_args()
 
     cliente = tts.TextToSpeechClient()
     if args.modo == "amostras":
         modo_amostras(cliente)
     else:
-        modo_livro(cliente, args.voz)
+        modo_livro(cliente, args.voz, refazer=args.refazer)
 
 
 if __name__ == "__main__":
