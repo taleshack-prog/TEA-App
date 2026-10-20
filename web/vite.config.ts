@@ -31,8 +31,22 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Não pré-cacheia os MP3 (grandes); eles entram no cache ao tocar.
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/audio\//],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/audio/"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audiolivro",
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
+        ],
       },
     }),
   ],
