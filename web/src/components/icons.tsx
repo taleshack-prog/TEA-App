@@ -50,3 +50,7 @@ export const IconPause = ({ size }: P) => (
 export const IconStop = ({ size }: P) => (
   <svg {...base(size)}><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
 );
+export const IconExternal = ({ size }: P) => (
+  <svg {...base(size)}><path d="M14 5h5v5" /><path d="M19 5l-8.5 8.5" />
+    <path d="M18 13.5V19H5V6h5.5" /></svg>
+);
