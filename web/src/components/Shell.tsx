@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SpectrumBar } from "./SpectrumBar";
 import { IconHome, IconTimeline, IconAlbum, IconResumo, IconGear, IconBook } from "./icons";
+import { Onboarding } from "./Onboarding";
 import { useAuth } from "../lib/auth";
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -22,6 +23,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="pv-layout">
+      <Onboarding />
       {/* Lateral — desktop */}
       <aside className="pv-sidebar" style={{ flexDirection: "column", width: 232,
         borderRight: "1px solid var(--line)", background: "var(--surface)",
