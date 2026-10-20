@@ -1,0 +1,5 @@
+# Adiciona o ffmpeg (transcodificação e fatiamento de áudio/vídeo e extração de
+# quadros para a análise de IA) aos pacotes que o Nixpacks já instala para o
+# projeto Python. O "..." preserva os pacotes detectados automaticamente.
+[phases.setup]
+nixPkgs = ["...", "ffmpeg"]

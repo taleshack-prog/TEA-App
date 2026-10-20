@@ -1,13 +1,25 @@
-/** Álbum (T9) — fotos e vídeos com descrição. Guarda uma imagem/vídeo junto do
- *  recado: "o que ele quis dizer com isso". */
+/** Álbum (T9) — fotos, vídeos e áudios com descrição ("o que ele quis dizer").
+ *  Para os pais, cada item tem "Analisar com IA": uma leitura por hipótese do
+ *  que a criança pode estar comunicando (visão para imagem/vídeo, transcrição
+ *  para áudio). Há também um campo para analisar um texto escrito. */
 import { useEffect, useRef, useState } from "react";
 import { Button, Card, inputStyle } from "../components/ui";
-import { IconCamera, IconPlay } from "../components/icons";
+import { IconCamera, IconPlay, IconResumo } from "../components/icons";
+import { useAuth } from "../lib/auth";
 import {
-  arquivoBlobUrl, listarMidias, patchMidia, uploadMidia, type Midia,
+  analisarMidia, analisarTexto, arquivoBlobUrl, listarMidias, patchMidia,
+  uploadMidia, type AnaliseMidia, type Midia,
 } from "../lib/api";
 
+function tipoDoArquivo(f: File): "video" | "audio" | "foto" {
+  if (f.type.startsWith("video")) return "video";
+  if (f.type.startsWith("audio")) return "audio";
+  return "foto";
+}
+
 export function Album() {
+  const { perfil } = useAuth();
+  const ehPai = !!perfil?.ve_analise_ia;
   const [itens, setItens] = useState<Midia[]>([]);
   const [blobs, setBlobs] = useState<Record<number, string>>({});
   const [carregando, setCarregando] = useState(true);
@@ -41,9 +53,8 @@ export function Album() {
   async function guardar() {
     if (!arquivo) return;
     setSalvando(true);
-    const tipo = arquivo.type.startsWith("video") ? "video" : "foto";
     try {
-      const nova = await uploadMidia(arquivo, tipo, desc);
+      const nova = await uploadMidia(arquivo, tipoDoArquivo(arquivo), desc);
       setItens((xs) => [nova, ...xs]);
       await carregarBlob(nova.id);
       setArquivo(null); setPreview(null); setDesc("");
@@ -57,26 +68,24 @@ export function Album() {
       <div>
         <h1 className="t-h1">Álbum</h1>
         <p className="t-sub" style={{ marginTop: 2 }}>
-          Guarde uma foto ou vídeo com o que você entendeu dela.
+          Guarde uma foto, vídeo ou áudio com o que você entendeu.
         </p>
       </div>
 
-      <input ref={inputRef} type="file" accept="image/*,video/*"
+      <input ref={inputRef} type="file" accept="image/*,video/*,audio/*"
         onChange={escolher} style={{ display: "none" }} />
 
       {!arquivo && (
         <Button variant="soft" onClick={() => inputRef.current?.click()}>
-          <IconCamera size={20} /> Adicionar foto ou vídeo
+          <IconCamera size={20} /> Adicionar foto, vídeo ou áudio
         </Button>
       )}
 
       {arquivo && preview && (
         <Card style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {arquivo.type.startsWith("video")
-            ? <video src={preview} controls style={midiaStyle} />
-            : <img src={preview} alt="prévia" style={midiaStyle} />}
+          <Previa tipo={tipoDoArquivo(arquivo)} url={preview} />
           <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3}
-            placeholder="O que ele quis dizer com isso? O que é essa imagem?"
+            placeholder="O que ele quis dizer com isso? O que é essa imagem/som?"
             style={{ ...inputStyle, height: "auto", padding: 14, resize: "vertical" }} />
           <div style={{ display: "flex", gap: 10 }}>
             <Button variant="ghost" full={false} onClick={() => {
@@ -90,29 +99,41 @@ export function Album() {
         </Card>
       )}
 
+      {ehPai && <AnalisarTexto />}
+
       {carregando && <p className="t-sub">Abrindo o álbum…</p>}
       {!carregando && itens.length === 0 && !arquivo && (
         <Card style={{ background: "var(--surface-2)" }}>
           <p style={{ fontWeight: 700 }}>O álbum está vazio.</p>
           <p className="t-small" style={{ marginTop: 4 }}>
-            Adicione a primeira foto ou vídeo com um recado.
+            Adicione a primeira foto, vídeo ou áudio com um recado.
           </p>
         </Card>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {itens.map((m) => (
-          <ItemMidia key={m.id} midia={m} url={blobs[m.id]} />
+          <ItemMidia key={m.id} midia={m} url={blobs[m.id]} ehPai={ehPai} />
         ))}
       </div>
     </div>
   );
 }
 
-function ItemMidia({ midia, url }: { midia: Midia; url?: string }) {
+function Previa({ tipo, url }: { tipo: string; url: string }) {
+  if (tipo === "video") return <video src={url} controls style={midiaStyle} />;
+  if (tipo === "audio") return <audio src={url} controls style={{ width: "100%" }} />;
+  return <img src={url} alt="prévia" style={midiaStyle} />;
+}
+
+function ItemMidia({ midia, url, ehPai }:
+  { midia: Midia; url?: string; ehPai: boolean }) {
   const [editando, setEditando] = useState(false);
   const [texto, setTexto] = useState(midia.descricao ?? "");
   const [salvando, setSalvando] = useState(false);
+
+  const [leitura, setLeitura] = useState<AnaliseMidia | null>(null);
+  const [analisando, setAnalisando] = useState(false);
 
   async function salvar() {
     setSalvando(true);
@@ -121,20 +142,30 @@ function ItemMidia({ midia, url }: { midia: Midia; url?: string }) {
     setSalvando(false);
   }
 
+  async function analisar() {
+    setAnalisando(true); setLeitura(null);
+    try { setLeitura(await analisarMidia(midia.id)); }
+    catch { setLeitura({ configurada: true, suficiente: false, hipoteses: [],
+      leitura: "Não consegui falar com a IA agora." }); }
+    setAnalisando(false);
+  }
+
   return (
     <Card style={{ padding: 0, overflow: "hidden" }}>
       <div style={{ background: "var(--surface-2)", position: "relative" }}>
         {url ? (
-          midia.tipo === "video"
-            ? <video src={url} controls style={midiaStyle} />
-            : <img src={url} alt={midia.descricao ?? "mídia"} style={midiaStyle} />
+          midia.tipo === "video" ? <video src={url} controls style={midiaStyle} />
+          : midia.tipo === "audio" ? (
+            <div style={{ padding: 16 }}><audio src={url} controls style={{ width: "100%" }} /></div>
+          ) : <img src={url} alt={midia.descricao ?? "mídia"} style={midiaStyle} />
         ) : (
-          <div style={{ height: 180, display: "flex", alignItems: "center",
+          <div style={{ height: 120, display: "flex", alignItems: "center",
             justifyContent: "center", color: "var(--ink-soft)" }}>
-            {midia.tipo === "video" ? <IconPlay /> : <IconCamera />}
+            {midia.tipo === "foto" ? <IconCamera /> : <IconPlay />}
           </div>
         )}
       </div>
+
       <div style={{ padding: 16 }}>
         {editando ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -157,8 +188,93 @@ function ItemMidia({ midia, url }: { midia: Midia; url?: string }) {
             </p>
           </div>
         )}
+
+        {ehPai && (
+          <div style={{ marginTop: 14 }}>
+            <Button variant="soft" full={false} disabled={analisando} onClick={analisar}>
+              <IconResumo size={18} /> {analisando ? "Lendo…" : "Analisar com IA"}
+            </Button>
+            {leitura && <LeituraMidiaCard a={leitura} />}
+          </div>
+        )}
       </div>
     </Card>
+  );
+}
+
+function AnalisarTexto() {
+  const [texto, setTexto] = useState("");
+  const [leitura, setLeitura] = useState<AnaliseMidia | null>(null);
+  const [analisando, setAnalisando] = useState(false);
+
+  async function analisar() {
+    if (texto.trim().length < 3) return;
+    setAnalisando(true); setLeitura(null);
+    try { setLeitura(await analisarTexto(texto)); }
+    catch { setLeitura({ configurada: true, suficiente: false, hipoteses: [],
+      leitura: "Não consegui falar com a IA agora." }); }
+    setAnalisando(false);
+  }
+
+  return (
+    <Card style={{ background: "var(--primary-tint)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+        color: "var(--primary-dark)" }}>
+        <IconResumo /><h2 className="t-h2" style={{ color: "var(--primary-dark)" }}>Analisar um texto</h2>
+      </div>
+      <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={3}
+        placeholder="Escreva um recado, uma fala, algo que ele expressou…"
+        style={{ ...inputStyle, height: "auto", padding: 14, resize: "vertical",
+          background: "var(--surface)" }} />
+      <div style={{ marginTop: 10 }}>
+        <Button full={false} disabled={analisando} onClick={analisar}>
+          {analisando ? "Lendo…" : "Analisar"}
+        </Button>
+      </div>
+      {leitura && <LeituraMidiaCard a={leitura} />}
+    </Card>
+  );
+}
+
+function LeituraMidiaCard({ a }: { a: AnaliseMidia }) {
+  return (
+    <div style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: 17, lineHeight: 1.5 }}>
+        {a.leitura}
+      </p>
+
+      {a.transcricao && (
+        <p className="t-small" style={{ marginTop: 10, fontStyle: "italic" }}>
+          Transcrição: “{a.transcricao}”
+        </p>
+      )}
+
+      {a.hipoteses?.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 14 }}>
+          {a.hipoteses.map((h, i) => (
+            <div key={i} style={{ borderLeft: "3px solid var(--primary)", paddingLeft: 12 }}>
+              <p style={{ fontWeight: 600 }}>{h.texto}</p>
+              {h.apoia_se_em && (
+                <p className="t-small" style={{ marginTop: 3 }}>Apoia-se em: {h.apoia_se_em}</p>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                <div style={{ flex: 1, height: 7, background: "var(--surface-2)",
+                  borderRadius: "var(--r-pill)", overflow: "hidden" }}>
+                  <div style={{ width: `${Math.round((h.confianca || 0) * 100)}%`,
+                    height: "100%", background: "var(--primary)" }} />
+                </div>
+                <span className="t-small">{Math.round((h.confianca || 0) * 100)}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="t-small" style={{ marginTop: 12, color: "var(--primary-dark)" }}>
+        É uma leitura por hipótese, não um diagnóstico.
+        {a.configurada === false && " Ative a chave da IA no servidor para leituras completas."}
+      </p>
+    </div>
   );
 }
 

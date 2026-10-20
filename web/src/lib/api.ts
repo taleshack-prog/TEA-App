@@ -172,6 +172,23 @@ export function leituraIA(dias: number): Promise<LeituraIA> {
   return req<LeituraIA>(`/analises/narrativa?${q}`);
 }
 
+/* -------- Análise multimodal de uma mídia ou texto (só pais) -------- */
+export interface AnaliseMidia {
+  configurada: boolean;
+  suficiente: boolean;
+  leitura: string;
+  hipoteses: Hipotese[];
+  tipo?: string;
+  transcricao?: string;
+  erro?: string;
+}
+
+export const analisarMidia = (id: number) =>
+  req<AnaliseMidia>(`/analises/midia/${id}`, { method: "POST" });
+
+export const analisarTexto = (texto: string) =>
+  req<AnaliseMidia>(`/analises/texto`, { method: "POST", body: JSON.stringify({ texto }) });
+
 /* -------- Galeria de mídia (fotos/vídeos + descrição) -------- */
 export interface Midia {
   id: number;
