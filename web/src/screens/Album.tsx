@@ -279,6 +279,6 @@ function LeituraMidiaCard({ a }: { a: AnaliseMidia }) {
 }
 
 const midiaStyle: React.CSSProperties = {
-  width: "100%", maxHeight: 300, objectFit: "cover", display: "block",
+  width: "100%", maxHeight: 440, objectFit: "contain", display: "block",
   background: "var(--surface-2)",
 };
