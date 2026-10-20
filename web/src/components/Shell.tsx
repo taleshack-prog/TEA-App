@@ -3,10 +3,8 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SpectrumBar } from "./SpectrumBar";
-import { IconHome, IconTimeline, IconAlbum, IconResumo, IconGear, IconBook, IconExternal } from "./icons";
+import { IconHome, IconTimeline, IconAlbum, IconResumo, IconGear, IconBook } from "./icons";
 import { useAuth } from "../lib/auth";
-
-const DAPP_URL = "https://neuro-art-d-app.vercel.app/";
 
 export function Shell({ children }: { children: ReactNode }) {
   const loc = useLocation();
@@ -45,13 +43,6 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-
-        <a href={DAPP_URL} target="_blank" rel="noopener noreferrer"
-          style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 12,
-            padding: "12px 14px", borderRadius: "var(--r)", textDecoration: "none",
-            fontWeight: 700, color: "var(--primary-dark)", background: "var(--primary-tint)" }}>
-          <IconExternal size={20} /><span>NeuroArt</span>
-        </a>
       </aside>
 
       <div className="pv-main">
@@ -59,15 +50,8 @@ export function Shell({ children }: { children: ReactNode }) {
         <header className="pv-mobilehead" style={{ position: "sticky", top: 0, zIndex: 10,
           background: "var(--bg)", paddingBottom: 6 }}>
           <div style={{ padding: "16px 20px 10px", maxWidth: 560, margin: "0 auto",
-            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            width: "100%" }}>
             <span className="t-h2" style={{ fontSize: 22 }}>Ponte Visual</span>
-            <a href={DAPP_URL} target="_blank" rel="noopener noreferrer"
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13,
-                fontWeight: 700, textDecoration: "none", color: "var(--primary-dark)",
-                background: "var(--primary-tint)", padding: "6px 12px",
-                borderRadius: "var(--r-pill)" }}>
-              NeuroArt <IconExternal size={15} />
-            </a>
           </div>
           <div style={{ maxWidth: 560, margin: "0 auto", padding: "0 20px", width: "100%" }}>
             <SpectrumBar rounded />

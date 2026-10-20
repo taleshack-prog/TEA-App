@@ -32,7 +32,7 @@ export default defineConfig({
       },
       workbox: {
         // Não pré-cacheia os MP3 (grandes); eles entram no cache ao tocar.
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,jpg,jpeg,woff2}"],
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/audio\//],
         runtimeCaching: [

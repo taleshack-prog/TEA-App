@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card } from "../components/ui";
-import { IconPlus, IconCamera, IconResumo } from "../components/icons";
+import { IconPlus, IconCamera, IconResumo, IconGuia, IconExternal } from "../components/icons";
+
+const DAPP_URL = "https://neuro-art-d-app.vercel.app/";
 import { proximoHorario } from "../lib/alarmes";
 import { pendentes } from "../lib/sync";
 import { useAuth } from "../lib/auth";
@@ -88,6 +90,48 @@ export function Home() {
           <span style={{ color: "#9a6a22", fontWeight: 800, fontSize: 20 }}>›</span>
         </Card>
       )}
+
+      <h2 className="t-h2" style={{ marginTop: 8 }}>Descubra</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <Card onClick={() => nav("/guia")} style={{ display: "flex", gap: 14,
+          alignItems: "center" }}>
+          <div style={{ color: "var(--primary-dark)" }}><IconGuia /></div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800 }}>Como funciona</div>
+            <div className="t-small" style={{ marginTop: 2 }}>O fluxo do app, passo a passo</div>
+          </div>
+          <span style={{ color: "var(--ink-soft)", fontWeight: 800, fontSize: 20 }}>›</span>
+        </Card>
+
+        <Card onClick={() => nav("/livro")} style={{ display: "flex", gap: 14,
+          alignItems: "center" }}>
+          <img src="/img/livro-capa.jpg" alt="Capa do livro Antifrágil Blindado"
+            style={{ width: 48, height: 72, objectFit: "cover", borderRadius: 8,
+              flexShrink: 0, boxShadow: "var(--shadow)" }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800 }}>Antifrágil Blindado</div>
+            <div className="t-small" style={{ marginTop: 2 }}>O audiolivro, narrado</div>
+          </div>
+          <span style={{ color: "var(--ink-soft)", fontWeight: 800, fontSize: 20 }}>›</span>
+        </Card>
+
+        <a href={DAPP_URL} target="_blank" rel="noopener noreferrer"
+          style={{ textDecoration: "none", color: "inherit" }}>
+          <Card style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <div style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 12,
+              background: "#fff", display: "flex", alignItems: "center",
+              justifyContent: "center", boxShadow: "var(--shadow)" }}>
+              <img src="/img/neuroart-logo.jpg" alt="NeuroArt DApp"
+                style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 7 }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 800 }}>NeuroArt DApp</div>
+              <div className="t-small" style={{ marginTop: 2 }}>Arte neurodivergente na web3</div>
+            </div>
+            <span style={{ color: "var(--ink-soft)" }}><IconExternal size={18} /></span>
+          </Card>
+        </a>
+      </div>
 
       <p className="t-small" style={{ marginTop: 4 }}>
         {navigator.onLine ? "Tudo sincronizado." : "Você está offline — salvamos aqui e enviamos depois."}

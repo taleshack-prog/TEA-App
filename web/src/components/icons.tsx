@@ -54,3 +54,7 @@ export const IconExternal = ({ size }: P) => (
   <svg {...base(size)}><path d="M14 5h5v5" /><path d="M19 5l-8.5 8.5" />
     <path d="M18 13.5V19H5V6h5.5" /></svg>
 );
+export const IconGuia = ({ size }: P) => (
+  <svg {...base(size)}><circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5" /><path d="M12 7.6h.01" /></svg>
+);
