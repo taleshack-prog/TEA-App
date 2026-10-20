@@ -3,8 +3,9 @@
  *  Fallback: voz do navegador (Web Speech API) quando o MP3 ainda não existe.
  *  Os textos ficam sempre visíveis para leitura. */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, Button } from "../components/ui";
-import { IconBook, IconPlay, IconPause, IconStop, IconBack } from "../components/icons";
+import { Card, Button, inputStyle } from "../components/ui";
+import { IconBook, IconPlay, IconPause, IconStop, IconBack, IconResumo } from "../components/icons";
+import { perguntarLivro, type RespostaLivro } from "../lib/api";
 import livro from "../data/livro.json";
 
 type Capitulo = { id: number; titulo: string; texto: string };
@@ -42,6 +43,8 @@ export function Biblioteca() {
         </p>
       </Card>
 
+      <PergunteAoLivro />
+
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {CAPITULOS.map((c) => (
           <button key={c.id} onClick={() => setAbertoId(c.id)}
@@ -65,6 +68,59 @@ export function Biblioteca() {
         ))}
       </div>
     </div>
+  );
+}
+
+/* ---------- Pergunte ao livro: ajuda da IA sobre o conteúdo ---------- */
+function PergunteAoLivro() {
+  const [pergunta, setPergunta] = useState("");
+  const [resp, setResp] = useState<RespostaLivro | null>(null);
+  const [carregando, setCarregando] = useState(false);
+
+  async function enviar() {
+    if (pergunta.trim().length < 3) return;
+    setCarregando(true); setResp(null);
+    try { setResp(await perguntarLivro(pergunta)); }
+    catch { setResp({ configurada: true, resposta: "Não consegui responder agora.", capitulos: [] }); }
+    setCarregando(false);
+  }
+
+  return (
+    <Card style={{ background: "var(--accent-tint)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+        color: "#9a6a22" }}>
+        <IconResumo /><h2 className="t-h2" style={{ color: "#9a6a22" }}>Pergunte ao livro</h2>
+      </div>
+      <p className="t-small" style={{ marginBottom: 10 }}>
+        Uma dúvida sobre o dia a dia? A IA responde com base no livro, citando o capítulo.
+      </p>
+      <textarea value={pergunta} onChange={(e) => setPergunta(e.target.value)} rows={2}
+        placeholder="Ex.: como ajudar numa crise sensorial?"
+        style={{ ...inputStyle, height: "auto", padding: 12, resize: "vertical",
+          background: "var(--surface)" }} />
+      <div style={{ marginTop: 10 }}>
+        <Button full={false} disabled={carregando} onClick={enviar}>
+          {carregando ? "Procurando no livro…" : "Perguntar"}
+        </Button>
+      </div>
+
+      {resp && (
+        <div style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: 17, lineHeight: 1.55,
+            whiteSpace: "pre-wrap" }}>{resp.resposta}</p>
+          {resp.capitulos?.length > 0 && (
+            <p className="t-small" style={{ marginTop: 10 }}>
+              Do livro: {resp.capitulos.join(" · ")}
+            </p>
+          )}
+          {resp.configurada === false && (
+            <p className="t-small" style={{ marginTop: 8, color: "#9a6a22" }}>
+              Ative a chave da IA no servidor para usar esta ajuda.
+            </p>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
 

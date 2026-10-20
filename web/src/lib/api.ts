@@ -189,6 +189,17 @@ export const analisarMidia = (id: number) =>
 export const analisarTexto = (texto: string) =>
   req<AnaliseMidia>(`/analises/texto`, { method: "POST", body: JSON.stringify({ texto }) });
 
+/* -------- Pergunte ao livro (ajuda da IA sobre o livro) -------- */
+export interface RespostaLivro {
+  configurada: boolean;
+  resposta: string;
+  capitulos: string[];
+  erro?: string;
+}
+
+export const perguntarLivro = (pergunta: string) =>
+  req<RespostaLivro>(`/livro/perguntar`, { method: "POST", body: JSON.stringify({ pergunta }) });
+
 /* -------- Galeria de mídia (fotos/vídeos + descrição) -------- */
 export interface Midia {
   id: number;

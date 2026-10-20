@@ -13,7 +13,7 @@ from app.config import settings
 from app.database import Base, engine
 from app import models  # noqa: F401  (registra as tabelas em Base.metadata)
 from app.routers import (
-    analises, arte, auth, checkins, config, eventos, midias, timeline,
+    analises, arte, auth, checkins, config, eventos, livro, midias, timeline,
 )
 
 # --- Verificação de banco no boot (anti-SQLite-fantasma) ---------------
@@ -49,7 +49,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (auth, checkins, eventos, midias, timeline, config, analises, arte):
+for r in (auth, checkins, eventos, midias, timeline, config, analises, arte, livro):
     app.include_router(r.router)
 
 
