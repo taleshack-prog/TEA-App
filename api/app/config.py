@@ -22,8 +22,8 @@ class Settings(BaseSettings):
 
     # IA — leitura interpretativa (Nível 3). Sem a chave, a tela avisa.
     ANTHROPIC_API_KEY: str = ""
-    IA_MODEL: str = "claude-3-5-haiku-latest"           # texto (barato)
-    IA_MODEL_VISION: str = "claude-3-5-sonnet-latest"   # foto/vídeo (melhor leitura)
+    IA_MODEL: str = "claude-haiku-5-5"            # texto (barato)
+    IA_MODEL_VISION: str = "claude-sonnet-5-5"    # foto/vídeo (melhor leitura)
 
     # Transcrição de áudio/vídeo — Google Cloud Speech-to-Text.
     # Cole o JSON da conta de serviço inteiro em GOOGLE_CREDENTIALS_JSON (Railway).
